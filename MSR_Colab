@@ -1,0 +1,48 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+
+def generate_combo(a,b):
+    exclude_months = ["Oct'24", "Nov'24", "Dec'24", "Jan'25", "Feb'25"]
+    mask = ~a.index.isin(exclude_months)
+    fig, ax1 = plt.subplots(figsize=(10, 5))
+    bar_width=0.35
+    bars = ax1.bar(a.index[mask], a['Submitted Overall'][mask], bar_width, alpha=0.3, color='aqua', label='Submitted Overall')
+    ax1.set_ylabel('Submitted overall')
+    ax2 = ax1.twinx()
+    ax2.plot(a.index[mask], a['Resolved Percentage'][mask], label='Resolved %', marker='s', color='blue')
+    ax2.set_ylabel('Resolved %')
+    ax2.set_yticks(np.arange(0, 120, 10))
+
+    for x, y in zip(a.index[mask], a['Submitted Overall'][mask]):
+        ax1.text(x, y + 3, str(y), ha='center', fontsize=11, fontweight='bold')
+    for x, y in zip(a.index[mask], a['Resolved Percentage'][mask]):
+        ax2.text(x, y -5, str(y), ha='center', fontsize=10)
+
+    plt.title(b)
+    plt.xticks(rotation=45, ha='right')
+    fig.legend([ax2.get_lines()[0], bars], ['Resolved %', 'Submitted Overall'],
+               loc='center left', bbox_to_anchor=(0.6, 1.0), fontsize=10)
+    plt.tight_layout()
+    plt.subplots_adjust(right=0.8)
+    plt.show()
+
+def run_analysis(choice):
+    if choice == "1":
+        data = pd.read_excel('https://raw.githubusercontent.com/roypromit/MSR/main/MSR_Data.xlsx',
+                             sheet_name='CMSP Trending', engine='openpyxl')
+        data['Month_dt'] = pd.to_datetime(data['Month'], format="%b'%y")
+        grouped = data.groupby('Month_dt')[['Submitted Overall', 'Resolved Percentage']].sum()
+        grouped.index = grouped.index.strftime("%b'%y")
+        generate_combo(grouped, "CMSP Trending")
+
+    elif choice == "2":
+        data = pd.read_excel('https://raw.githubusercontent.com/roypromit/MSR/main/MSR_Data.xlsx',
+                             sheet_name='Remedy Ticket Trending', engine='openpyxl')
+        data['Month_dt'] = pd.to_datetime(data['Month'], format="%b'%y")
+        grouped = data.groupby('Month_dt')[['Submitted Overall', 'Resolved Percentage']].sum()
+        grouped.index = grouped.index.strftime("%b'%y")
+        generate_combo(grouped, "Remedy Ticket Trending")
+
+    else:
+        print("Invalid choice")
